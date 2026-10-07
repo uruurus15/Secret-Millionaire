@@ -96,7 +96,7 @@
     const r = await pywebview.api.host($('#port').value.trim());
     if (!r.ok) { $('#host-err').textContent = r.error; return; }
     store('dfg_port', String(r.port));
-    location.href = `http://127.0.0.1:${r.port}/?action=create&name=${encodeURIComponent(name())}&ips=${encodeURIComponent(r.ips.join(','))}&home=${home}`;
+    location.href = `http://127.0.0.1:${r.port}/?action=create&name=${encodeURIComponent(name())}&addrs=${encodeURIComponent(JSON.stringify(r.addrs))}&home=${home}`;
   };
   $('#cpus').value = store('dfg_cpus') || '3';
   $('#solo').onclick = async () => {

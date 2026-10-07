@@ -4,9 +4,11 @@
   daifugo.exe --server   … 画面なしで対戦サーバーだけ起動（常設サーバー用）
 """
 import argparse
+import ipaddress
 import os
 import socket
 import sys
+import threading
 import urllib.request
 
 BASE = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
@@ -34,10 +36,27 @@ def local_ips():
     return ips or ['127.0.0.1']
 
 
+def fetch_global_ip():
+    """外から見えるグローバルIPv4（取れなければ None）"""
+    try:
+        with urllib.request.urlopen('https://api.ipify.org', timeout=4) as r:
+            ip = r.read().decode().strip()
+        return ip if ipaddress.ip_address(ip).version == 4 else None
+    except Exception:  # noqa: BLE001  オフラインなどは表示しないだけ
+        return None
+
+
 class Api:
     def __init__(self):
         self.port = None
         self.solo_port = None
+        # ホスト開始が遅くならないよう、グローバルIPは起動時に裏で取得しておく
+        self._gip = None
+        self._gip_thread = threading.Thread(target=self._load_gip, daemon=True)
+        self._gip_thread.start()
+
+    def _load_gip(self):
+        self._gip = fetch_global_ip()
 
     def host(self, port):
         try:
@@ -49,7 +68,19 @@ class Api:
             if err:
                 return {'ok': False, 'error': err}
             self.port = port
-        return {'ok': True, 'port': self.port, 'ips': [f'{ip}:{self.port}' for ip in local_ips()]}
+        self._gip_thread.join(timeout=4)
+        ips = local_ips()
+        # 先頭は既定の経路（家のLAN）。Hamachi は 25.x.x.x を使う
+        lan = next((ip for ip in ips if not ip.startswith('25.')), None)
+        addrs = []
+        if lan and not lan.startswith('127.'):
+            addrs.append({'kind': 'LAN', 'note': '同じWi-Fi・LANの人', 'addr': f'{lan}:{self.port}'})
+        for ip in ips:
+            if ip.startswith('25.'):
+                addrs.append({'kind': 'Hamachi', 'note': 'Hamachiで参加する人', 'addr': f'{ip}:{self.port}'})
+        if self._gip:
+            addrs.append({'kind': 'インターネット', 'note': 'ルーターでポート開放した場合', 'addr': f'{self._gip}:{self.port}'})
+        return {'ok': True, 'port': self.port, 'addrs': addrs}
 
     def solo(self):
         """ソロ用：このPC内だけで使うサーバーを空きポートで起動する（外部には公開しない）"""

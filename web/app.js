@@ -193,12 +193,7 @@ function renderLobby() {
   const r = S.room;
   const isHost = r.host === r.me;
   $('#lobby-code').textContent = r.code;
-  const ips = params.get('ips');
-  $('#lobby-addr').innerHTML = r.solo
-    ? '<b style="color:var(--gold)">ソロプレイ</b>（この部屋には他の人は参加できません）'
-    : ips
-      ? `友達は「部屋に入る」で <b>${esc(ips.split(',').join(' / '))}</b> に接続し、部屋番号 <b>${esc(r.code)}</b> で参加できます`
-      : `接続先: <b>${esc(location.host)}</b> ／ 部屋番号 <b>${esc(r.code)}</b>`;
+  renderAddrs(r);
   $('#seat-count').textContent = `${r.members.length}/${r.maxPlayers}`;
   let html = r.members.map((m, i) => `
     <div class="seat ${m.pid === r.me ? 'me' : ''}">
@@ -236,6 +231,50 @@ function renderLobby() {
   const log = $('#lobby-chat-log');
   log.innerHTML = r.chat.map((c) => c.name ? `<div><span class="nm">${esc(c.name)}</span>：${esc(c.text)}</div>` : `<div class="sys">${esc(c.text)}</div>`).join('');
   log.scrollTop = log.scrollHeight;
+}
+
+// クリップボードにコピー（http の LAN アドレスなど clipboard API が使えない場面は execCommand で代用）
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    ta.remove();
+    if (!ok) { toast('コピーできませんでした。文字を選択してコピーしてください'); return; }
+  }
+  toast(`コピーしました：${text}`, 'info');
+}
+
+function lobbyAddrs() {
+  try {
+    const a = JSON.parse(params.get('addrs') || 'null');
+    if (Array.isArray(a) && a.length) return a;
+  } catch (e) { /* 古い形式・不正な値は無視 */ }
+  return [{ kind: '接続先', note: '', addr: location.host }];
+}
+
+// ロビー上部：友達に伝える接続先（コピーボタン付き）
+function renderAddrs(r) {
+  const el = $('#lobby-addr');
+  const key = r.solo ? 'solo' : 'addrs';
+  if (el.dataset.key === key) return; // 選択中の文字が消えないよう、変化がなければ描き直さない
+  el.dataset.key = key;
+  if (r.solo) {
+    el.innerHTML = '<b style="color:var(--gold)">ソロプレイ</b>（この部屋には他の人は参加できません）';
+    return;
+  }
+  el.innerHTML = '<div class="addr-title">友達は「部屋に入る」で次のどれかに接続 → 部屋番号を選んで参加</div><div class="addr-row">'
+    + lobbyAddrs().map((a) => `<span class="addr-chip" title="${esc(a.note)}">
+        <span class="addr-kind">${esc(a.kind)}</span><span class="addr-text">${esc(a.addr)}</span>
+        <button class="copy-btn" data-copy="${esc(a.addr)}">コピー</button></span>`).join('')
+    + '</div>';
+  el.querySelectorAll('[data-copy]').forEach((b) => (b.onclick = () => copyText(b.dataset.copy)));
 }
 
 function renderSettings(s, isHost) {
@@ -883,6 +922,7 @@ function bindUI() {
   }
   $('#btn-leave').onclick = () => send({ t: 'leave' });
   $('#sel-bots').onchange = () => send({ t: 'set_bots', count: +$('#sel-bots').value });
+  $('#btn-copy-code').onclick = () => S.room && copyText(S.room.code);
   $('#btn-solo').onclick = () => createRoom(true, +$('#sel-solo-cpus').value);
   $('#btn-start').onclick = () => send({ t: 'start' });
   for (const f of ['#lobby-chat-form', '#game-chat-form']) {

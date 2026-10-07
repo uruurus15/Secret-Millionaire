@@ -481,3 +481,21 @@ input:focus, select:focus { border-color: var(--gold); }
 
 /* 結果を表示ボタン：押したときに中央配置の transform が上書きされてずれないようにする */
 .btn-result:active:not(:disabled) { transform: translate(-50%, -50%); }
+
+/* ---------- 接続先アドレス・部屋番号のコピー ---------- */
+.room-code-row { display: flex; align-items: center; gap: 8px; }
+.room-code, .addr-text { user-select: text; cursor: text; }
+.copy-btn {
+  background: rgba(246,211,107,.15); color: var(--gold); border: 1px solid rgba(246,211,107,.6);
+  border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+.copy-btn:hover { background: rgba(246,211,107,.3); }
+.copy-btn:active { background: rgba(246,211,107,.45); }
+.addr-title { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.addr-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.addr-chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 8px;
+  background: rgba(0,0,0,.35); border: 1px solid #3d5a4a; border-radius: 8px;
+}
+.addr-kind { font-size: 11px; color: var(--muted); }
+.addr-text { font-weight: 800; color: var(--text); font-size: 14px; font-variant-numeric: tabular-nums; }
