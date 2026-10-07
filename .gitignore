@@ -1,0 +1,13 @@
+# ビルド成果物（exe は GitHub Releases で配布する）
+dist/
+build/
+
+# Python
+__pycache__/
+*.pyc
+
+# エディタ・OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini

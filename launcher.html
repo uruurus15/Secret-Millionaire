@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>大富豪</title>
+<link rel="icon" href="web/icon.ico">
+<style>
+  :root { --gold: #f6d36b; --muted: #b9c4bc; --text: #f5f1e6; --serif: "Yu Mincho", "YuMincho", serif; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; } html { height: 100%; }
+  body {
+    font-family: "Yu Gothic UI", "Yu Gothic", "Meiryo", sans-serif; color: var(--text); user-select: none;
+    background: radial-gradient(ellipse at 50% 30%, #23874d 0%, #135c32 45%, #072415 100%);
+    display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 18px; min-height: 100%; padding: 16px 0; overflow: auto;
+  }
+  .logo { text-align: center; }
+  .logo-cards { display: flex; justify-content: center; height: 84px; margin-bottom: -6px; }
+  .lc { width: 54px; height: 78px; background: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 40px; box-shadow: 0 6px 16px rgba(0,0,0,.5); margin: 0 -8px; }
+  .lc1 { transform: rotate(-18deg) translateY(10px); color: #111; } .lc2 { transform: rotate(-6deg); color: #d42a3a; }
+  .lc3 { transform: rotate(6deg); color: #d42a3a; } .lc4 { transform: rotate(18deg) translateY(10px); color: #111; }
+  h1 {
+    font-family: var(--serif); font-size: 76px; margin: 0; letter-spacing: .08em;
+    background: linear-gradient(#fff6c8, #f6d36b 40%, #c08a22 60%, #ffe9a0); -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 4px 0 #5a3a05) drop-shadow(0 8px 18px rgba(0,0,0,.6));
+  }
+  .sub { letter-spacing: .6em; color: var(--gold); font-weight: 700; }
+  .cols { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+  .panel {
+    width: 330px; background: rgba(12, 28, 22, .88); border: 1px solid rgba(246,211,107,.45); border-radius: 14px; padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.45); display: flex; flex-direction: column; gap: 10px;
+  }
+  h2 { margin: 0; color: var(--gold); font-size: 18px; letter-spacing: .1em; }
+  p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.6; }
+  label { font-size: 12px; color: var(--gold); }
+  input, select { background: #0d1c16; color: var(--text); border: 1px solid #4b6a5a; border-radius: 8px; padding: 10px 12px; font-size: 15px; outline: none; font-family: inherit; }
+  input:focus { border-color: var(--gold); }
+  .btn { border: 0; border-radius: 10px; padding: 13px; font-size: 17px; font-weight: 700; cursor: pointer; font-family: inherit; box-shadow: 0 3px 0 rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.35); }
+  .btn:active { transform: translateY(2px); }
+  .gold { background: linear-gradient(#ffe08a, #e0a52f 55%, #b97b16); color: #3a2400; }
+  .green { background: linear-gradient(#5fd08a, #2f9a58 60%, #1f6e3e); color: #fff; }
+  .blue { background: linear-gradient(#5aa0ff, #2b6fd6 60%, #1d4f9e); color: #fff; }
+  .name-row { width: 360px; display: flex; flex-direction: column; gap: 6px; }
+  .err { color: #ff9a9a; font-size: 13px; min-height: 18px; }
+</style>
+</head>
+<body>
+  <div class="logo">
+    <div class="logo-cards"><span class="lc lc1">♠</span><span class="lc lc2">♥</span><span class="lc lc3">♦</span><span class="lc lc4">♣</span></div>
+    <h1>大富豪</h1>
+    <div class="sub">ONLINE BATTLE</div>
+  </div>
+  <div class="name-row">
+    <label>プレイヤー名</label>
+    <input id="name" maxlength="12" placeholder="名前を入力">
+  </div>
+  <div class="cols">
+    <div class="panel">
+      <h2>ひとりで遊ぶ（ソロ）</h2>
+      <p>CPUと対戦します。ネットワークには公開されません。</p>
+      <label>CPUの人数</label>
+      <select id="cpus">
+        <option value="1">1人（2人対戦）</option><option value="2">2人（3人対戦）</option>
+        <option value="3" selected>3人（4人対戦）</option><option value="4">4人（5人対戦）</option><option value="5">5人（6人対戦）</option>
+      </select>
+      <button class="btn green" id="solo">ソロで開始</button>
+      <div class="err" id="solo-err"></div>
+    </div>
+    <div class="panel">
+      <h2>部屋を作る（ホスト）</h2>
+      <p>このPCをサーバーにして部屋を作ります。表示されるアドレスを友達に伝えてください。</p>
+      <label>ポート番号</label>
+      <input id="port" value="8765" inputmode="numeric">
+      <button class="btn gold" id="host">ホストとして開始</button>
+      <div class="err" id="host-err"></div>
+    </div>
+    <div class="panel">
+      <h2>部屋に入る</h2>
+      <p>ホストのアドレス（例: 192.168.1.10:8765）を入力して接続します。</p>
+      <label>接続先アドレス</label>
+      <input id="addr" placeholder="192.168.1.10:8765">
+      <button class="btn blue" id="join">接続する</button>
+      <div class="err" id="join-err"></div>
+    </div>
+  </div>
+<script>
+  const $ = (s) => document.querySelector(s);
+  const store = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) {} };
+  $('#name').value = store('dfg_name') || '';
+  $('#addr').value = store('dfg_addr') || '';
+  $('#port').value = store('dfg_port') || '8765';
+  const name = () => { const n = $('#name').value.trim() || 'プレイヤー'; store('dfg_name', n); return n; };
+  const home = encodeURIComponent(location.href);
+
+  $('#host').onclick = async () => {
+    $('#host-err').textContent = '起動中…';
+    const r = await pywebview.api.host($('#port').value.trim());
+    if (!r.ok) { $('#host-err').textContent = r.error; return; }
+    store('dfg_port', String(r.port));
+    location.href = `http://127.0.0.1:${r.port}/?action=create&name=${encodeURIComponent(name())}&ips=${encodeURIComponent(r.ips.join(','))}&home=${home}`;
+  };
+  $('#cpus').value = store('dfg_cpus') || '3';
+  $('#solo').onclick = async () => {
+    $('#solo-err').textContent = '起動中…';
+    const r = await pywebview.api.solo();
+    if (!r.ok) { $('#solo-err').textContent = r.error; return; }
+    store('dfg_cpus', $('#cpus').value);
+    location.href = `http://127.0.0.1:${r.port}/?action=solo&cpus=${$('#cpus').value}&name=${encodeURIComponent(name())}&home=${home}`;
+  };
+  $('#join').onclick = async () => {
+    const a = $('#addr').value.trim();
+    if (!a) { $('#join-err').textContent = 'アドレスを入力してください'; return; }
+    $('#join-err').textContent = '接続中…';
+    const r = await pywebview.api.check(a);
+    if (!r.ok) { $('#join-err').textContent = r.error; return; }
+    store('dfg_addr', a);
+    location.href = `http://${r.addr}/?name=${encodeURIComponent(name())}&home=${home}`;
+  };
+  $('#addr').onkeydown = (e) => { if (e.key === 'Enter') $('#join').click(); };
+</script>
+</body>
+</html>
